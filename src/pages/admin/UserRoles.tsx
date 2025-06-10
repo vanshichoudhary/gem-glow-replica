@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -255,7 +254,7 @@ const UserRoles = () => {
                       <td key={permission} className="text-center p-2 border-b">
                         <Checkbox 
                           checked={role.permissions.includes(permission)} 
-                          readOnly 
+                          disabled
                         />
                       </td>
                     ))}
