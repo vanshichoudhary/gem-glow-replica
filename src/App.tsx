@@ -20,7 +20,15 @@ import Coupons from "./pages/admin/Coupons";
 import Reports from "./pages/admin/Reports";
 import UserRoles from "./pages/admin/UserRoles";
 
-const queryClient = new QueryClient();
+// Create QueryClient outside of component to prevent re-creation
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 // Simple auth check for admin routes
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
