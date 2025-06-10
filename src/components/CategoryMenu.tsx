@@ -1,13 +1,17 @@
 
+import { useNavigate } from "react-router-dom";
+
 const CategoryMenu = () => {
+  const navigate = useNavigate();
+  
   const leftCategories = [
-    "NECKLACES",
-    "PENDANTS", 
-    "EARRINGS",
-    "RINGS",
-    "BRACELETS",
-    "ANKLETS",
-    "GIFT CARD"
+    { name: "NECKLACES", slug: "necklaces" },
+    { name: "PENDANTS", slug: "pendants" }, 
+    { name: "EARRINGS", slug: "earrings" },
+    { name: "RINGS", slug: "rings" },
+    { name: "BRACELETS", slug: "bracelets" },
+    { name: "ANKLETS", slug: "anklets" },
+    { name: "GIFT CARD", slug: "gift-card" }
   ];
 
   const rightCategories = [
@@ -18,6 +22,10 @@ const CategoryMenu = () => {
     "CEYLON"
   ];
 
+  const handleCategoryClick = (slug: string) => {
+    navigate(`/category/${slug}`);
+  };
+
   return (
     <section className="py-16 px-6 bg-background">
       <div className="max-w-7xl mx-auto">
@@ -27,8 +35,12 @@ const CategoryMenu = () => {
               <h3 className="text-xl font-light tracking-wide mb-6">SHOP BY CATEGORY</h3>
               <ul className="space-y-3">
                 {leftCategories.map((category, index) => (
-                  <li key={index} className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors">
-                    {category}
+                  <li 
+                    key={index} 
+                    className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                    onClick={() => handleCategoryClick(category.slug)}
+                  >
+                    {category.name}
                   </li>
                 ))}
               </ul>
