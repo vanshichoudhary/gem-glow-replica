@@ -2,14 +2,20 @@
 const Hero = () => {
   return (
     <section className="relative h-screen w-full overflow-hidden">
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1596944924616-7b8e6ba4e3d2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80')`
-        }}
+      <video
+        className="absolute inset-0 w-full h-full object-cover"
+        autoPlay
+        muted
+        loop
+        playsInline
       >
-        <div className="absolute inset-0 bg-black bg-opacity-20" />
-      </div>
+        <source
+          src="https://videos.pexels.com/video-files/6964253/6964253-uhd_2560_1440_30fps.mp4"
+          type="video/mp4"
+        />
+        Your browser does not support the video tag.
+      </video>
+      <div className="absolute inset-0 bg-black bg-opacity-20" />
     </section>
   );
 };

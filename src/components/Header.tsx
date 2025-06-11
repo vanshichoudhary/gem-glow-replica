@@ -1,8 +1,33 @@
 
-import { Search, User, ShoppingBag, ChevronDown, Instagram, Facebook } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, User, ShoppingBag, ChevronDown, Instagram, Facebook, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import SignInModal from "@/components/auth/SignInModal";
+import SignUpModal from "@/components/auth/SignUpModal";
+import { useToast } from "@/hooks/use-toast";
 
 const Header = () => {
+  const [isSignInOpen, setIsSignInOpen] = useState(false);
+  const [isSignUpOpen, setIsSignUpOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Check if user is authenticated
+    const token = localStorage.getItem('userToken');
+    setIsAuthenticated(!!token);
+  }, []);
+
+  const handleSignOut = () => {
+    localStorage.removeItem('userToken');
+    setIsAuthenticated(false);
+    toast({
+      title: "Success",
+      description: "Signed out successfully!",
+    });
+  };
+
   return (
     <header className="w-full bg-background">
       {/* Top bar */}
@@ -35,7 +60,30 @@ const Header = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          <User size={20} />
+          {isAuthenticated ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <User size={20} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setIsSignInOpen(true)}>
+                Sign In
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setIsSignUpOpen(true)}>
+                Sign Up
+              </Button>
+            </div>
+          )}
           <ShoppingBag size={20} />
         </div>
       </div>
@@ -58,6 +106,16 @@ const Header = () => {
           <ChevronDown size={16} />
         </div>
       </nav>
+
+      {/* Auth Modals */}
+      <SignInModal 
+        isOpen={isSignInOpen} 
+        onClose={() => setIsSignInOpen(false)}
+      />
+      <SignUpModal 
+        isOpen={isSignUpOpen} 
+        onClose={() => setIsSignUpOpen(false)}
+      />
     </header>
   );
 };
