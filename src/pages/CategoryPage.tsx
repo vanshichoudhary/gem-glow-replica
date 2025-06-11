@@ -1,4 +1,3 @@
-
 import { useParams } from "react-router-dom";
 import { useState } from "react";
 import Header from "@/components/Header";
@@ -7,6 +6,9 @@ import ProductCard from "@/components/ProductCard";
 import ProductFilters from "@/components/ProductFilters";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Filter } from "lucide-react";
 
 // Mock product data
 const generateProducts = (category: string) => {
@@ -41,6 +43,7 @@ const getImageId = (category: string) => {
 const CategoryPage = () => {
   const { category } = useParams<{ category: string }>();
   const [sortBy, setSortBy] = useState("popularity");
+  const isMobile = useIsMobile();
   
   if (!category) return null;
   
@@ -51,25 +54,40 @@ const CategoryPage = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <div className="container mx-auto px-6 py-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-light mb-2">{categoryTitle}</h1>
-          <p className="text-muted-foreground">Showing {products.length} products</p>
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-2xl sm:text-3xl font-light mb-2">{categoryTitle}</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">Showing {products.length} products</p>
         </div>
 
-        <div className="flex gap-8">
-          {/* Filters Sidebar */}
-          <div className="w-64 flex-shrink-0">
-            <ProductFilters />
-          </div>
+        <div className="flex gap-4 sm:gap-8">
+          {/* Mobile Filters */}
+          {isMobile ? (
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm" className="mb-4">
+                  <Filter className="w-4 h-4 mr-2" />
+                  Filters
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-80">
+                <ProductFilters />
+              </SheetContent>
+            </Sheet>
+          ) : (
+            /* Desktop Filters Sidebar */
+            <div className="w-64 flex-shrink-0">
+              <ProductFilters />
+            </div>
+          )}
 
           {/* Products Grid */}
           <div className="flex-1">
-            <div className="flex justify-between items-center mb-6">
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-muted-foreground">Sort by:</span>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-4">
+              <div className="flex items-center gap-2 sm:gap-4">
+                <span className="text-xs sm:text-sm text-muted-foreground">Sort by:</span>
                 <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-48">
+                  <SelectTrigger className="w-40 sm:w-48">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -83,7 +101,7 @@ const CategoryPage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
               {products.map((product) => (
                 <ProductCard
                   key={product.id}
@@ -100,7 +118,7 @@ const CategoryPage = () => {
             </div>
 
             {/* Load More Button */}
-            <div className="text-center mt-8">
+            <div className="text-center mt-6 sm:mt-8">
               <Button variant="outline" size="lg">
                 Load More Products
               </Button>
