@@ -1,31 +1,27 @@
 
-import { useState, useEffect } from "react";
-import { Search, User, ShoppingBag, ChevronDown, Instagram, Facebook, LogOut } from "lucide-react";
+import { useState } from "react";
+import { Search, User, ShoppingBag, ChevronDown, Instagram, Facebook, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import SignInModal from "@/components/auth/SignInModal";
-import SignUpModal from "@/components/auth/SignUpModal";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Header = () => {
-  const [isSignInOpen, setIsSignInOpen] = useState(false);
-  const [isSignUpOpen, setIsSignUpOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { toast } = useToast();
+  const { user, profile, isAdmin, signOut } = useAuth();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    // Check if user is authenticated
-    const token = localStorage.getItem('userToken');
-    setIsAuthenticated(!!token);
-  }, []);
-
-  const handleSignOut = () => {
-    localStorage.removeItem('userToken');
-    setIsAuthenticated(false);
+  const handleSignOut = async () => {
+    await signOut();
     toast({
       title: "Success",
       description: "Signed out successfully!",
     });
+  };
+
+  const handleAdminPanel = () => {
+    navigate('/admin');
   };
 
   return (
@@ -60,26 +56,37 @@ const Header = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          {isAuthenticated ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <User size={20} />
+          {user ? (
+            <div className="flex items-center gap-2">
+              {isAdmin && (
+                <Button variant="outline" size="sm" onClick={handleAdminPanel}>
+                  <Shield className="mr-2 h-4 w-4" />
+                  Admin Panel
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <User size={20} />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem disabled>
+                    {profile?.full_name || user.email}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setIsSignInOpen(true)}>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/auth')}>
                 Sign In
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setIsSignUpOpen(true)}>
+              <Button variant="outline" size="sm" onClick={() => navigate('/auth')}>
                 Sign Up
               </Button>
             </div>
@@ -106,16 +113,6 @@ const Header = () => {
           <ChevronDown size={16} />
         </div>
       </nav>
-
-      {/* Auth Modals */}
-      <SignInModal 
-        isOpen={isSignInOpen} 
-        onClose={() => setIsSignInOpen(false)}
-      />
-      <SignUpModal 
-        isOpen={isSignUpOpen} 
-        onClose={() => setIsSignUpOpen(false)}
-      />
     </header>
   );
 };

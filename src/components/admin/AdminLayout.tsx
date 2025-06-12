@@ -25,6 +25,7 @@ import {
   LogOut 
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 const adminMenuItems = [
   { title: 'Dashboard', url: '/admin/dashboard', icon: LayoutDashboard },
@@ -39,10 +40,11 @@ const adminMenuItems = [
 
 const AdminLayout = () => {
   const navigate = useNavigate();
+  const { signOut, profile } = useAuth();
 
-  const handleLogout = () => {
-    localStorage.removeItem('adminToken');
-    navigate('/admin/login');
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/');
   };
 
   return (
@@ -51,6 +53,7 @@ const AdminLayout = () => {
         <Sidebar className="border-r">
           <SidebarHeader className="border-b p-4">
             <h2 className="text-lg font-semibold">Admin Panel</h2>
+            <p className="text-sm text-muted-foreground">Welcome, {profile?.full_name}</p>
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu className="p-2">
@@ -93,7 +96,7 @@ const AdminLayout = () => {
           <header className="flex h-16 items-center gap-4 border-b px-4">
             <SidebarTrigger />
             <div className="flex-1">
-              <h1 className="text-xl font-semibold">E-commerce Admin</h1>
+              <h1 className="text-xl font-semibold">Noora Shawqi - Admin</h1>
             </div>
           </header>
           <main className="flex-1 p-6">

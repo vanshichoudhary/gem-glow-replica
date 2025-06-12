@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,16 +14,81 @@ import { Badge } from '@/components/ui/badge';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { DollarSign, Package, Users, ShoppingCart } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 
 const Dashboard = () => {
-  // Mock data
-  const stats = [
-    { title: 'Total Sales', value: '$12,345', change: '+12%', icon: DollarSign, color: 'text-green-600' },
-    { title: 'Orders', value: '1,234', change: '+8%', icon: ShoppingCart, color: 'text-blue-600' },
-    { title: 'Customers', value: '856', change: '+15%', icon: Users, color: 'text-purple-600' },
-    { title: 'Products', value: '432', change: '+3%', icon: Package, color: 'text-orange-600' },
-  ];
+  // Fetch dashboard stats
+  const { data: stats, isLoading: statsLoading } = useQuery({
+    queryKey: ['dashboard-stats'],
+    queryFn: async () => {
+      const [ordersRes, customersRes, productsRes] = await Promise.all([
+        supabase.from('orders').select('total_amount, created_at'),
+        supabase.from('profiles').select('id').eq('role', 'customer'),
+        supabase.from('products').select('id, stock_quantity')
+      ]);
 
+      const totalSales = ordersRes.data?.reduce((sum, order) => sum + Number(order.total_amount), 0) || 0;
+      const totalOrders = ordersRes.data?.length || 0;
+      const totalCustomers = customersRes.data?.length || 0;
+      const totalProducts = productsRes.data?.length || 0;
+
+      return {
+        totalSales,
+        totalOrders,
+        totalCustomers,
+        totalProducts
+      };
+    }
+  });
+
+  // Fetch recent orders
+  const { data: recentOrders } = useQuery({
+    queryKey: ['recent-orders'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          id,
+          total_amount,
+          status,
+          created_at,
+          profiles(full_name, email)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Fetch products by category for pie chart
+  const { data: categoryData } = useQuery({
+    queryKey: ['products-by-category'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('category');
+
+      if (error) throw error;
+
+      const categoryCounts = data.reduce((acc: any, product) => {
+        acc[product.category] = (acc[product.category] || 0) + 1;
+        return acc;
+      }, {});
+
+      const colors = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#00C49F'];
+      
+      return Object.entries(categoryCounts).map(([name, value], index) => ({
+        name: name.charAt(0).toUpperCase() + name.slice(1),
+        value,
+        color: colors[index % colors.length]
+      }));
+    }
+  });
+
+  // Mock sales data for line chart (you can implement this with real data later)
   const salesData = [
     { day: 'Mon', sales: 1200 },
     { day: 'Tue', sales: 1900 },
@@ -34,29 +99,58 @@ const Dashboard = () => {
     { day: 'Sun', sales: 2000 },
   ];
 
-  const categoryData = [
-    { name: 'Necklaces', value: 35, color: '#8884d8' },
-    { name: 'Rings', value: 25, color: '#82ca9d' },
-    { name: 'Earrings', value: 20, color: '#ffc658' },
-    { name: 'Bracelets', value: 15, color: '#ff7300' },
-    { name: 'Others', value: 5, color: '#00C49F' },
-  ];
-
-  const recentOrders = [
-    { id: '#001', customer: 'John Doe', amount: '$299', status: 'Delivered', date: '2024-01-15' },
-    { id: '#002', customer: 'Jane Smith', amount: '$149', status: 'Pending', date: '2024-01-14' },
-    { id: '#003', customer: 'Mike Johnson', amount: '$399', status: 'Processing', date: '2024-01-14' },
-    { id: '#004', customer: 'Sarah Wilson', amount: '$199', status: 'Delivered', date: '2024-01-13' },
-  ];
-
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Delivered': return 'bg-green-100 text-green-800';
-      case 'Pending': return 'bg-yellow-100 text-yellow-800';
-      case 'Processing': return 'bg-blue-100 text-blue-800';
+      case 'delivered': return 'bg-green-100 text-green-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'processing': return 'bg-blue-100 text-blue-800';
+      case 'shipped': return 'bg-purple-100 text-purple-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  };
+
+  const statsCards = [
+    { 
+      title: 'Total Sales', 
+      value: formatCurrency(stats?.totalSales || 0), 
+      change: '+12%', 
+      icon: DollarSign, 
+      color: 'text-green-600' 
+    },
+    { 
+      title: 'Orders', 
+      value: stats?.totalOrders?.toString() || '0', 
+      change: '+8%', 
+      icon: ShoppingCart, 
+      color: 'text-blue-600' 
+    },
+    { 
+      title: 'Customers', 
+      value: stats?.totalCustomers?.toString() || '0', 
+      change: '+15%', 
+      icon: Users, 
+      color: 'text-purple-600' 
+    },
+    { 
+      title: 'Products', 
+      value: stats?.totalProducts?.toString() || '0', 
+      change: '+3%', 
+      icon: Package, 
+      color: 'text-orange-600' 
+    },
+  ];
+
+  if (statsLoading) {
+    return <div>Loading dashboard...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -67,7 +161,7 @@ const Dashboard = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
+        {statsCards.map((stat, index) => (
           <Card key={index}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -105,21 +199,21 @@ const Dashboard = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Sales by Category</CardTitle>
+            <CardTitle>Products by Category</CardTitle>
           </CardHeader>
           <CardContent>
             <ChartContainer config={{}} className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={categoryData}
+                    data={categoryData || []}
                     cx="50%"
                     cy="50%"
                     outerRadius={80}
                     dataKey="value"
                     label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   >
-                    {categoryData.map((entry, index) => (
+                    {(categoryData || []).map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -149,15 +243,17 @@ const Dashboard = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {recentOrders.map((order) => (
+              {recentOrders?.map((order) => (
                 <TableRow key={order.id}>
-                  <TableCell className="font-medium">{order.id}</TableCell>
-                  <TableCell>{order.customer}</TableCell>
-                  <TableCell>{order.amount}</TableCell>
+                  <TableCell className="font-medium">#{order.id.slice(0, 8)}</TableCell>
+                  <TableCell>{order.profiles?.full_name || order.profiles?.email}</TableCell>
+                  <TableCell>{formatCurrency(Number(order.total_amount))}</TableCell>
                   <TableCell>
-                    <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
+                    <Badge className={getStatusColor(order.status)}>
+                      {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                    </Badge>
                   </TableCell>
-                  <TableCell>{order.date}</TableCell>
+                  <TableCell>{new Date(order.created_at).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <Button variant="outline" size="sm">View</Button>
                   </TableCell>
