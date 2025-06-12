@@ -18,10 +18,15 @@ const Header = () => {
       title: "Success",
       description: "Signed out successfully!",
     });
+    navigate('/');
   };
 
   const handleAdminPanel = () => {
     navigate('/admin');
+  };
+
+  const handleAuth = () => {
+    navigate('/auth');
   };
 
   return (
@@ -46,7 +51,7 @@ const Header = () => {
           <Search size={20} className="text-muted-foreground" />
         </div>
 
-        <div className="absolute left-1/2 transform -translate-x-1/2">
+        <div className="absolute left-1/2 transform -translate-x-1/2 cursor-pointer" onClick={() => navigate('/')}>
           <div className="flex flex-col items-center">
             <div className="w-12 h-12 border border-foreground rounded-full flex items-center justify-center mb-2">
               <span className="text-lg font-bold">NS</span>
@@ -59,9 +64,9 @@ const Header = () => {
           {user ? (
             <div className="flex items-center gap-2">
               {isAdmin && (
-                <Button variant="outline" size="sm" onClick={handleAdminPanel}>
-                  <Shield className="mr-2 h-4 w-4" />
-                  Admin Panel
+                <Button variant="outline" size="sm" onClick={handleAdminPanel} className="bg-red-50 hover:bg-red-100 border-red-200">
+                  <Shield className="mr-2 h-4 w-4 text-red-600" />
+                  <span className="text-red-600 font-medium">Admin Panel</span>
                 </Button>
               )}
               <DropdownMenu>
@@ -71,8 +76,9 @@ const Header = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem disabled>
-                    {profile?.full_name || user.email}
+                  <DropdownMenuItem disabled className="flex-col items-start">
+                    <span className="font-medium">{profile?.full_name || user.email}</span>
+                    <span className="text-xs text-muted-foreground capitalize">{profile?.role} Account</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />
@@ -83,10 +89,10 @@ const Header = () => {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={() => navigate('/auth')}>
+              <Button variant="ghost" size="sm" onClick={handleAuth}>
                 Sign In
               </Button>
-              <Button variant="outline" size="sm" onClick={() => navigate('/auth')}>
+              <Button variant="outline" size="sm" onClick={handleAuth}>
                 Sign Up
               </Button>
             </div>
