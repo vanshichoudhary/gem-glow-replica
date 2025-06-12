@@ -6,10 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 interface Profile {
   id: string;
   email: string;
-  full_name: string | null;
   role: 'admin' | 'customer';
   created_at: string;
-  updated_at: string;
 }
 
 interface AuthContextType {
@@ -49,7 +47,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .single();
     
     if (!error && data) {
-      // Type assertion to ensure role matches our interface
       const profileData: Profile = {
         ...data,
         role: data.role as 'admin' | 'customer'

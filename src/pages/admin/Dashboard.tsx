@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,50 +11,39 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { DollarSign, Package, Users, ShoppingCart } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 
 const Dashboard = () => {
-  // Fetch dashboard stats
+  // Fetch basic stats from profiles table
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
-      const [ordersRes, customersRes, productsRes] = await Promise.all([
-        supabase.from('orders').select('total_amount, created_at'),
-        supabase.from('profiles').select('id').eq('role', 'customer'),
-        supabase.from('products').select('id, stock_quantity')
+      const [adminRes, customerRes] = await Promise.all([
+        supabase.from('profiles').select('id').eq('role', 'admin'),
+        supabase.from('profiles').select('id').eq('role', 'customer')
       ]);
 
-      const totalSales = ordersRes.data?.reduce((sum, order) => sum + Number(order.total_amount), 0) || 0;
-      const totalOrders = ordersRes.data?.length || 0;
-      const totalCustomers = customersRes.data?.length || 0;
-      const totalProducts = productsRes.data?.length || 0;
+      const totalAdmins = adminRes.data?.length || 0;
+      const totalCustomers = customerRes.data?.length || 0;
 
       return {
-        totalSales,
-        totalOrders,
+        totalSales: 0, // Placeholder until orders table is created
+        totalOrders: 0, // Placeholder until orders table is created
         totalCustomers,
-        totalProducts
+        totalAdmins
       };
     }
   });
 
-  // Fetch recent orders
-  const { data: recentOrders } = useQuery({
-    queryKey: ['recent-orders'],
+  // Fetch recent users
+  const { data: recentUsers } = useQuery({
+    queryKey: ['recent-users'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('orders')
-        .select(`
-          id,
-          total_amount,
-          status,
-          created_at,
-          profiles(full_name, email)
-        `)
+        .from('profiles')
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(10);
 
@@ -62,53 +51,6 @@ const Dashboard = () => {
       return data;
     }
   });
-
-  // Fetch products by category for pie chart
-  const { data: categoryData } = useQuery({
-    queryKey: ['products-by-category'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select('category');
-
-      if (error) throw error;
-
-      const categoryCounts = data.reduce((acc: any, product) => {
-        acc[product.category] = (acc[product.category] || 0) + 1;
-        return acc;
-      }, {});
-
-      const colors = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#00C49F'];
-      
-      return Object.entries(categoryCounts).map(([name, value], index) => ({
-        name: name.charAt(0).toUpperCase() + name.slice(1),
-        value,
-        color: colors[index % colors.length]
-      }));
-    }
-  });
-
-  // Mock sales data for line chart (you can implement this with real data later)
-  const salesData = [
-    { day: 'Mon', sales: 1200 },
-    { day: 'Tue', sales: 1900 },
-    { day: 'Wed', sales: 3000 },
-    { day: 'Thu', sales: 5000 },
-    { day: 'Fri', sales: 4000 },
-    { day: 'Sat', sales: 3000 },
-    { day: 'Sun', sales: 2000 },
-  ];
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'delivered': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'processing': return 'bg-blue-100 text-blue-800';
-      case 'shipped': return 'bg-purple-100 text-purple-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -121,28 +63,28 @@ const Dashboard = () => {
     { 
       title: 'Total Sales', 
       value: formatCurrency(stats?.totalSales || 0), 
-      change: '+12%', 
+      change: '+0%', 
       icon: DollarSign, 
       color: 'text-green-600' 
     },
     { 
       title: 'Orders', 
       value: stats?.totalOrders?.toString() || '0', 
-      change: '+8%', 
+      change: '+0%', 
       icon: ShoppingCart, 
       color: 'text-blue-600' 
     },
     { 
       title: 'Customers', 
       value: stats?.totalCustomers?.toString() || '0', 
-      change: '+15%', 
+      change: '+0%', 
       icon: Users, 
       color: 'text-purple-600' 
     },
     { 
-      title: 'Products', 
-      value: stats?.totalProducts?.toString() || '0', 
-      change: '+3%', 
+      title: 'Admins', 
+      value: stats?.totalAdmins?.toString() || '0', 
+      change: '+0%', 
       icon: Package, 
       color: 'text-orange-600' 
     },
@@ -177,86 +119,49 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Sales Overview</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={{}} className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={salesData}>
-                  <XAxis dataKey="day" />
-                  <YAxis />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Line type="monotone" dataKey="sales" stroke="#8884d8" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Products by Category</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={{}} className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={categoryData || []}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {(categoryData || []).map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                </PieChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Orders */}
+      {/* Notice for missing tables */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Orders</CardTitle>
+          <CardTitle>Setup Required</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground mb-4">
+            To enable full dashboard functionality, you'll need to create the following database tables:
+          </p>
+          <ul className="list-disc list-inside space-y-2 text-sm">
+            <li>Products table (for inventory management)</li>
+            <li>Orders table (for sales tracking)</li>
+            <li>Order items table (for order details)</li>
+          </ul>
+        </CardContent>
+      </Card>
+
+      {/* Recent Users */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Users</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Order ID</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>User ID</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Created</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {recentOrders?.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell className="font-medium">#{order.id.slice(0, 8)}</TableCell>
-                  <TableCell>{order.profiles?.full_name || order.profiles?.email}</TableCell>
-                  <TableCell>{formatCurrency(Number(order.total_amount))}</TableCell>
+              {recentUsers?.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell className="font-medium">#{user.id.slice(0, 8)}</TableCell>
+                  <TableCell>{user.email}</TableCell>
                   <TableCell>
-                    <Badge className={getStatusColor(order.status)}>
-                      {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                    <Badge className={user.role === 'admin' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}>
+                      {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                     </Badge>
                   </TableCell>
-                  <TableCell>{new Date(order.created_at).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <Button variant="outline" size="sm">View</Button>
-                  </TableCell>
+                  <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
