@@ -77,7 +77,7 @@ const Header = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem disabled className="flex-col items-start">
-                    <span className="font-medium">{profile?.full_name || user.email}</span>
+                    <span className="font-medium">{profile?.email || user.email}</span>
                     <span className="text-xs text-muted-foreground capitalize">{profile?.role} Account</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleSignOut}>

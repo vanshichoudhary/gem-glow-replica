@@ -53,7 +53,7 @@ const AdminLayout = () => {
         <Sidebar className="border-r">
           <SidebarHeader className="border-b p-4">
             <h2 className="text-lg font-semibold">Admin Panel</h2>
-            <p className="text-sm text-muted-foreground">Welcome, {profile?.full_name}</p>
+            <p className="text-sm text-muted-foreground">Welcome, {profile?.email}</p>
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu className="p-2">
