@@ -49,7 +49,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .single();
     
     if (!error && data) {
-      setProfile(data);
+      // Type assertion to ensure role matches our interface
+      const profileData: Profile = {
+        ...data,
+        role: data.role as 'admin' | 'customer'
+      };
+      setProfile(profileData);
     }
   };
 
