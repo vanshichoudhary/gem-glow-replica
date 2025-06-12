@@ -16,7 +16,7 @@ interface AuthContextType {
   profile: Profile | null;
   isLoading: boolean;
   isAdmin: boolean;
-  signUp: (email: string, password: string, fullName: string, role?: 'admin' | 'customer') => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
@@ -37,7 +37,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const isAdmin = profile?.role === 'admin';
+  // Check if user is admin based on email and verification status
+  const isAdmin = profile?.role === 'admin' && user?.email === 'vanshichoudhary40@gmail.com' && user?.email_confirmed_at;
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
@@ -88,8 +89,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName: string, role: 'admin' | 'customer' = 'customer') => {
+  const signUp = async (email: string, password: string, fullName: string) => {
     const redirectUrl = `${window.location.origin}/`;
+    
+    // Set role based on email address
+    const role = email === 'vanshichoudhary40@gmail.com' ? 'admin' : 'customer';
     
     const { error } = await supabase.auth.signUp({
       email,

@@ -40,8 +40,13 @@ const Header = () => {
         <div className="flex items-center gap-4">
           <Instagram size={16} />
           <Facebook size={16} />
-          <span>AED</span>
-          <ChevronDown size={16} />
+          {/* Only show AED for verified admin users */}
+          {isAdmin && (
+            <>
+              <span>AED</span>
+              <ChevronDown size={16} />
+            </>
+          )}
         </div>
       </div>
 
@@ -63,6 +68,7 @@ const Header = () => {
         <div className="flex items-center gap-4">
           {user ? (
             <div className="flex items-center gap-2">
+              {/* Only show Admin Panel button for verified admin user */}
               {isAdmin && (
                 <Button variant="outline" size="sm" onClick={handleAdminPanel} className="bg-red-50 hover:bg-red-100 border-red-200">
                   <Shield className="mr-2 h-4 w-4 text-red-600" />
@@ -78,7 +84,7 @@ const Header = () => {
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem disabled className="flex-col items-start">
                     <span className="font-medium">{profile?.email || user.email}</span>
-                    <span className="text-xs text-muted-foreground capitalize">{profile?.role} Account</span>
+                    <span className="text-xs text-muted-foreground capitalize">{profile?.role || 'customer'} Account</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />

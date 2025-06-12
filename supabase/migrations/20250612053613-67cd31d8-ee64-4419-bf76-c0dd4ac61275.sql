@@ -110,12 +110,20 @@ CREATE POLICY "Admins can view all order items" ON public.order_items
     )
   );
 
--- Create function to handle new user registration
+-- Create function to handle new user registration with admin role assignment
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, email, full_name)
-  VALUES (NEW.id, NEW.email, NEW.raw_user_meta_data->>'full_name');
+  INSERT INTO public.profiles (id, email, full_name, role)
+  VALUES (
+    NEW.id, 
+    NEW.email, 
+    NEW.raw_user_meta_data->>'full_name',
+    CASE 
+      WHEN NEW.email = 'vanshichoudhary40@gmail.com' THEN 'admin'
+      ELSE 'customer'
+    END
+  );
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
