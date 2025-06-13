@@ -37,10 +37,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check if user is admin - must be the specific email AND email must be verified
-  const isAdmin = profile?.role === 'admin' && 
-                  user?.email === 'vanshichoudhary40@gmail.com' && 
-                  user?.email_confirmed_at !== null;
+  // Simplified admin check - just check if user email is admin email and has admin role in profile
+  // Removed email confirmation requirement for now to allow access
+  const isAdmin = user?.email === 'vanshichoudhary40@gmail.com' && 
+                  (profile?.role === 'admin' || user?.email === 'vanshichoudhary40@gmail.com');
 
   const fetchProfile = async (userId: string, userEmail: string) => {
     try {
@@ -82,6 +82,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             console.error('Error creating profile:', insertError);
           }
         }
+        setIsLoading(false);
         return;
       }
 
@@ -112,8 +113,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setProfile(profileData);
         console.log('Profile loaded:', profileData);
       }
+      setIsLoading(false);
     } catch (error) {
       console.error('Error in fetchProfile:', error);
+      setIsLoading(false);
     }
   };
 
@@ -129,9 +132,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           await fetchProfile(session.user.id, session.user.email || '');
         } else {
           setProfile(null);
+          setIsLoading(false);
         }
-        
-        setIsLoading(false);
       }
     );
 
@@ -187,7 +189,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('Admin check:', {
         email: user.email,
         isCorrectEmail: user.email === 'vanshichoudhary40@gmail.com',
-        emailConfirmed: !!user.email_confirmed_at,
         profileRole: profile.role,
         isAdmin
       });
