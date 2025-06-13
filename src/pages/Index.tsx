@@ -5,6 +5,9 @@ import Hero from "@/components/Hero";
 import Collections from "@/components/Collections";
 import Categories from "@/components/Categories";
 import CategoryMenu from "@/components/CategoryMenu";
+import ExceptionalPieces from "@/components/ExceptionalPieces";
+import EssentialsCollection from "@/components/EssentialsCollection";
+import FeaturedProducts from "@/components/FeaturedProducts";
 import About from "@/components/About";
 import Footer from "@/components/Footer";
 
@@ -20,6 +23,9 @@ const Index = () => {
       <Header />
       <Hero />
       <Collections />
+      <ExceptionalPieces />
+      <EssentialsCollection />
+      <FeaturedProducts />
       <Categories />
       <CategoryMenu />
       <About />
