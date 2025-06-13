@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -38,7 +37,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Check if user is admin based on email and verification status
-  const isAdmin = profile?.role === 'admin' && user?.email === 'vanshichoudhary40@gmail.com' && user?.email_confirmed_at;
+  const isAdmin = profile?.role === 'admin' && user?.email === 'vanshichoudhary40@gmail.com' && !!user?.email_confirmed_at;
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
