@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -36,22 +37,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check if user is admin based on email and verification status
-  const isAdmin = profile?.role === 'admin' && user?.email === 'vanshichoudhary40@gmail.com' && !!user?.email_confirmed_at;
+  // Check if user is admin - must be the specific email AND email must be verified
+  const isAdmin = user?.email === 'vanshichoudhary40@gmail.com' && 
+                  user?.email_confirmed_at && 
+                  profile?.role === 'admin';
 
   const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    
-    if (!error && data) {
-      const profileData: Profile = {
-        ...data,
-        role: data.role as 'admin' | 'customer'
-      };
-      setProfile(profileData);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (!error && data) {
+        const profileData: Profile = {
+          ...data,
+          role: data.role as 'admin' | 'customer'
+        };
+        setProfile(profileData);
+        console.log('Profile loaded:', profileData);
+      } else {
+        console.error('Error fetching profile:', error);
+      }
+    } catch (error) {
+      console.error('Error in fetchProfile:', error);
     }
   };
 
@@ -59,13 +69,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          setTimeout(() => {
-            fetchProfile(session.user.id);
-          }, 0);
+          await fetchProfile(session.user.id);
         } else {
           setProfile(null);
         }
@@ -76,6 +85,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Existing session:', session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -91,17 +101,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signUp = async (email: string, password: string, fullName: string) => {
     const redirectUrl = `${window.location.origin}/`;
     
-    // Set role based on email address
-    const role = email === 'vanshichoudhary40@gmail.com' ? 'admin' : 'customer';
-    
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
         data: {
-          full_name: fullName,
-          role: role
+          full_name: fullName
         }
       }
     });
@@ -121,6 +127,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signOut = async () => {
     await supabase.auth.signOut();
   };
+
+  // Add debug logging for admin status
+  useEffect(() => {
+    if (user && profile) {
+      console.log('Admin check:', {
+        email: user.email,
+        isCorrectEmail: user.email === 'vanshichoudhary40@gmail.com',
+        emailConfirmed: !!user.email_confirmed_at,
+        profileRole: profile.role,
+        isAdmin
+      });
+    }
+  }, [user, profile, isAdmin]);
 
   return (
     <AuthContext.Provider value={{
