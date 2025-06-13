@@ -38,19 +38,54 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Check if user is admin - must be the specific email AND email must be verified
-  // Also check if profile role needs to be updated to admin
-  const isAdmin = user?.email === 'vanshichoudhary40@gmail.com' && 
+  const isAdmin = profile?.role === 'admin' && 
+                  user?.email === 'vanshichoudhary40@gmail.com' && 
                   user?.email_confirmed_at !== null;
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (userId: string, userEmail: string) => {
     try {
+      console.log('Fetching profile for user:', userId, userEmail);
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
       
-      if (!error && data) {
+      if (error) {
+        console.error('Error fetching profile:', error);
+        // If no profile exists, create one
+        if (error.code === 'PGRST116') {
+          console.log('Creating new profile for user');
+          const newProfile = {
+            id: userId,
+            email: userEmail,
+            role: userEmail === 'vanshichoudhary40@gmail.com' ? 'admin' : 'customer'
+          };
+          
+          const { data: insertedData, error: insertError } = await supabase
+            .from('profiles')
+            .insert([newProfile])
+            .select()
+            .single();
+          
+          if (!insertError && insertedData) {
+            const profileData: Profile = {
+              id: insertedData.id,
+              email: insertedData.email,
+              role: insertedData.role as 'admin' | 'customer',
+              created_at: insertedData.created_at
+            };
+            setProfile(profileData);
+            console.log('New profile created:', profileData);
+          } else {
+            console.error('Error creating profile:', insertError);
+          }
+        }
+        return;
+      }
+
+      if (data) {
         // Properly type the role and set default if needed
         const roleValue = data.role === 'admin' || data.role === 'customer' ? data.role : 'customer';
         
@@ -62,7 +97,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         };
 
         // If this is the admin email but role is not admin, update it
-        if (user?.email === 'vanshichoudhary40@gmail.com' && data.role !== 'admin') {
+        if (userEmail === 'vanshichoudhary40@gmail.com' && data.role !== 'admin') {
           console.log('Updating admin role for admin email');
           const { error: updateError } = await supabase
             .from('profiles')
@@ -76,8 +111,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         setProfile(profileData);
         console.log('Profile loaded:', profileData);
-      } else {
-        console.error('Error fetching profile:', error);
       }
     } catch (error) {
       console.error('Error in fetchProfile:', error);
@@ -93,7 +126,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          await fetchProfile(session.user.id);
+          await fetchProfile(session.user.id, session.user.email || '');
         } else {
           setProfile(null);
         }
@@ -109,9 +142,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchProfile(session.user.id);
+        fetchProfile(session.user.id, session.user.email || '');
+      } else {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
