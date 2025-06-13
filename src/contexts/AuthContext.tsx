@@ -51,9 +51,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .single();
       
       if (!error && data) {
+        // Properly type the role and set default if needed
+        const roleValue = data.role === 'admin' || data.role === 'customer' ? data.role : 'customer';
+        
         let profileData: Profile = {
-          ...data,
-          role: data.role as 'admin' | 'customer'
+          id: data.id,
+          email: data.email,
+          role: roleValue,
+          created_at: data.created_at
         };
 
         // If this is the admin email but role is not admin, update it
