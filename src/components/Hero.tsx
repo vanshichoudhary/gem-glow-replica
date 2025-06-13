@@ -11,11 +11,7 @@ const Hero = () => {
         preload="metadata"
       >
         <source
-          src="https://videos.pexels.com/video-files/3209828/3209828-uhd_2560_1440_25fps.mp4"
-          type="video/mp4"
-        />
-        <source
-          src="https://videos.pexels.com/video-files/7710243/7710243-uhd_2560_1440_25fps.mp4"
+          src="https://ik.imagekit.io/cn0lbrbin/0613.mp4?updatedAt=1749784621964"
           type="video/mp4"
         />
         Your browser does not support the video tag.

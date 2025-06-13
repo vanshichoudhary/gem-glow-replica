@@ -42,7 +42,7 @@ const Header = () => {
         <div className="flex items-center gap-4">
           <Instagram size={16} />
           <Facebook size={16} />
-          {/* Show AED only for verified admin users */}
+          {/* Show AED only for admin users */}
           {isAdmin && (
             <>
               <span>AED</span>
@@ -70,7 +70,7 @@ const Header = () => {
         <div className="flex items-center gap-4">
           {user ? (
             <div className="flex items-center gap-2">
-              {/* Show Admin Panel button only for verified admin user */}
+              {/* Show Admin Panel button only for admin user */}
               {isAdmin && (
                 <Button variant="outline" size="sm" onClick={handleAdminPanel} className="bg-red-50 hover:bg-red-100 border-red-200">
                   <Shield className="mr-2 h-4 w-4 text-red-600" />

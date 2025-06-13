@@ -38,9 +38,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Check if user is admin - must be the specific email AND email must be verified
+  // Also check if profile role needs to be updated to admin
   const isAdmin = user?.email === 'vanshichoudhary40@gmail.com' && 
-                  user?.email_confirmed_at && 
-                  profile?.role === 'admin';
+                  user?.email_confirmed_at !== null;
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -51,10 +51,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .single();
       
       if (!error && data) {
-        const profileData: Profile = {
+        let profileData: Profile = {
           ...data,
           role: data.role as 'admin' | 'customer'
         };
+
+        // If this is the admin email but role is not admin, update it
+        if (user?.email === 'vanshichoudhary40@gmail.com' && data.role !== 'admin') {
+          console.log('Updating admin role for admin email');
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ role: 'admin' })
+            .eq('id', userId);
+          
+          if (!updateError) {
+            profileData.role = 'admin';
+          }
+        }
+
         setProfile(profileData);
         console.log('Profile loaded:', profileData);
       } else {
